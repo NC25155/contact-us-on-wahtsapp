@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f5f0">
+  <title>Contact Us on WhatsApp</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #202124;
+      --muted: #60646c;
+      --paper: #fff;
+      --bg: #eaf7f1;
+      --accent: #128C7E;
+      --accent-hover: #075E54;
+      --line: #e2e0d9;
+      --danger: #a12b2b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; padding: 24px;
+      display: grid; place-items: center;
+      background: var(--bg); color: var(--ink);
+      font: 16px/1.5 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    main {
+      width: min(100%, 680px); background: var(--paper);
+      border: 1px solid var(--line); border-radius: 22px;
+      padding: clamp(20px, 5vw, 36px);
+      box-shadow: 0 12px 36px rgba(20, 25, 20, .07);
+    }
+    .eyebrow { margin: 0 0 8px; color: var(--accent); font-size: .8rem; font-weight: 750; letter-spacing: .09em; text-transform: uppercase; }
+    h1 { margin: 0 0 10px; font-size: clamp(1.8rem, 6vw, 2.5rem); line-height: 1.12; }
+    .intro { color: var(--muted); margin: 0 0 22px; }
+    .notice { background: #f1f5f1; border: 1px solid #d9e6dc; border-radius: 14px; padding: 16px; margin: 18px 0; }
+    .notice strong { display: block; margin-bottom: 4px; }
+    .notice p { margin: 0; color: #3e5146; }
+    .check { display: flex; gap: 10px; align-items: flex-start; margin: 18px 0; }
+    .check input { width: 20px; height: 20px; margin-top: 3px; accent-color: var(--accent); flex: 0 0 auto; }
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+    button, .download {
+      border: 0; border-radius: 11px; padding: 12px 16px;
+      font: inherit; font-weight: 700; cursor: pointer; text-decoration: none;
+      display: inline-flex; justify-content: center; align-items: center;
+    }
+    button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid #8bb6a2; outline-offset: 3px; }
+    button:disabled { opacity: .45; cursor: not-allowed; }
+    .primary { color: white; background: var(--accent); }
+    .primary:hover:not(:disabled) { background: var(--accent-hover); }
+    .secondary, .download { color: var(--ink); background: #eeede8; }
+    .status { min-height: 1.5em; margin: 16px 0 0; color: var(--muted); }
+    .status.error { color: var(--danger); }
+    .stage { margin-top: 20px; }
+    video, canvas, .preview {
+      display: block; width: 100%; max-height: 65vh; object-fit: contain;
+      background: #171917; border-radius: 14px;
+    }
+    video[hidden], canvas[hidden], .preview[hidden] { display: none; }
+    .countdown { font-size: 1.1rem; font-weight: 750; margin: 10px 0; }
+    .small { color: var(--muted); font-size: .9rem; }
+    footer { border-top: 1px solid var(--line); margin-top: 26px; padding-top: 16px; color: var(--muted); font-size: .85rem; }
+    noscript { color: var(--danger); }
+    .whatsapp-link { color: white; background: #25D366; }
+    .whatsapp-link:hover { background: #128C7E; }
+    .cookie-banner {
+      position: fixed; inset: auto 16px 16px; z-index: 20;
+      width: min(100% - 32px, 620px); margin-inline: auto;
+      background: #fff; color: var(--ink); border: 1px solid var(--line);
+      border-radius: 16px; padding: 18px;
+      box-shadow: 0 12px 40px rgba(0,0,0,.2);
+    }
+    .cookie-banner[hidden] { display: none; }
+    .cookie-banner h2 { font-size: 1.1rem; margin: 0 0 6px; }
+    .cookie-banner p { color: var(--muted); margin: 0 0 14px; }
+    .cookie-banner .actions { margin-top: 0; }
+    @media (prefers-reduced-motion: no-preference) {
+      .cookie-banner { animation: banner-in .18s ease-out; }
+      @keyframes banner-in { from { transform: translateY(8px); opacity: .7; } to { transform: translateY(0); opacity: 1; } }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <p class="eyebrow">WhatsApp • Contact support</p>
+    <h1>Contact us on WhatsApp</h1>
+    <p class="intro">Have a question? We're here to help. Choose an option below to continue.</p>
+
+    <section class="notice" aria-label="Photo and privacy information">
+      <strong>Quick and easy support</strong>
+      <p>Use the button below to open WhatsApp and start a conversation. This demo page does not need your camera.</p>
+    </section>
+
+    <div class="actions">
+      <a class="download whatsapp-link" href="https://www.whatsapp.com/" target="_blank" rel="noopener noreferrer">💬 Contact us on WhatsApp</a>
+      <button id="prank" class="secondary" type="button">Reveal surprise</button>
+    </div>
+
+    <p id="status" class="status" role="status" aria-live="polite">Thanks for visiting our contact page.</p>
+    <section id="reveal" class="notice" hidden>
+      <strong>😂 You've been pranked!</strong>
+      <p>This was a demo contact page. No photo was taken and no camera was accessed.</p>
+    </section>
+
+    <footer>Demo page only. The WhatsApp button opens WhatsApp's website; set it to your real business or project contact link before sharing.</footer>
+    <noscript>This page needs JavaScript enabled to use the camera.</noscript>
+  </main>
+
+  <script>
+    (() => {
+      const banner = document.getElementById('cookie-banner');
+      const accept = document.getElementById('accept-cookies');
+      const reject = document.getElementById('reject-cookies');
+      const prank = document.getElementById('prank');
+      const reveal = document.getElementById('reveal');
+      const status = document.getElementById('status');
+
+      // Cookie choices only dismiss the banner and save a preference.
+      try {
+        const saved = localStorage.getItem('contact-page-cookie-choice');
+        if (saved === 'accepted' || saved === 'rejected') banner.hidden = true;
+      } catch (_) {}
+
+      function chooseCookies(choice) {
+        try { localStorage.setItem('contact-page-cookie-choice', choice); } catch (_) {}
+        banner.hidden = true;
+      }
+      accept.addEventListener('click', () => chooseCookies('accepted'));
+      reject.addEventListener('click', () => chooseCookies('rejected'));
+
+      prank.addEventListener('click', () => {
+        reveal.hidden = false;
+        status.textContent = 'Surprise revealed!';
+        prank.disabled = true;
+      });
+    })();
+  </script>
+
+  <aside id="cookie-banner" class="cookie-banner" role="dialog" aria-labelledby="cookie-title" aria-describedby="cookie-description">
+    <h2 id="cookie-title">🍪 Before you continue</h2>
+    <p id="cookie-description">We use essential site preferences to make this demo page work. Your choice does not open WhatsApp or access your camera.</p>
+    <div class="actions">
+      <button id="reject-cookies" class="secondary">Reject optional cookies</button>
+      <button id="accept-cookies" class="primary">Accept cookies</button>
+    </div>
+  </aside>
+
+</body>
+</html>
