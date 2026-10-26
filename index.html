@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f5f0">
+  <title>School Project Selfie</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #202124;
+      --muted: #60646c;
+      --paper: #fff;
+      --bg: #f7f5f0;
+      --accent: #275d4a;
+      --accent-hover: #1d4839;
+      --line: #e2e0d9;
+      --danger: #a12b2b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; padding: 24px;
+      display: grid; place-items: center;
+      background: var(--bg); color: var(--ink);
+      font: 16px/1.5 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    main {
+      width: min(100%, 680px); background: var(--paper);
+      border: 1px solid var(--line); border-radius: 22px;
+      padding: clamp(20px, 5vw, 36px);
+      box-shadow: 0 12px 36px rgba(20, 25, 20, .07);
+    }
+    .eyebrow { margin: 0 0 8px; color: var(--accent); font-size: .8rem; font-weight: 750; letter-spacing: .09em; text-transform: uppercase; }
+    h1 { margin: 0 0 10px; font-size: clamp(1.8rem, 6vw, 2.5rem); line-height: 1.12; }
+    .intro { color: var(--muted); margin: 0 0 22px; }
+    .notice { background: #f1f5f1; border: 1px solid #d9e6dc; border-radius: 14px; padding: 16px; margin: 18px 0; }
+    .notice strong { display: block; margin-bottom: 4px; }
+    .notice p { margin: 0; color: #3e5146; }
+    .check { display: flex; gap: 10px; align-items: flex-start; margin: 18px 0; }
+    .check input { width: 20px; height: 20px; margin-top: 3px; accent-color: var(--accent); flex: 0 0 auto; }
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+    button, .download {
+      border: 0; border-radius: 11px; padding: 12px 16px;
+      font: inherit; font-weight: 700; cursor: pointer; text-decoration: none;
+      display: inline-flex; justify-content: center; align-items: center;
+    }
+    button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid #8bb6a2; outline-offset: 3px; }
+    button:disabled { opacity: .45; cursor: not-allowed; }
+    .primary { color: white; background: var(--accent); }
+    .primary:hover:not(:disabled) { background: var(--accent-hover); }
+    .secondary, .download { color: var(--ink); background: #eeede8; }
+    .status { min-height: 1.5em; margin: 16px 0 0; color: var(--muted); }
+    .status.error { color: var(--danger); }
+    .stage { margin-top: 20px; }
+    video, canvas, .preview {
+      display: block; width: 100%; max-height: 65vh; object-fit: contain;
+      background: #171917; border-radius: 14px;
+    }
+    video[hidden], canvas[hidden], .preview[hidden] { display: none; }
+    .countdown { font-size: 1.1rem; font-weight: 750; margin: 10px 0; }
+    .small { color: var(--muted); font-size: .9rem; }
+    footer { border-top: 1px solid var(--line); margin-top: 26px; padding-top: 16px; color: var(--muted); font-size: .85rem; }
+    noscript { color: var(--danger); }
+  </style>
+</head>
+<body>
+  <main>
+    <p class="eyebrow">School project</p>
+    <h1>Take a selfie</h1>
+    <p class="intro">Take a quick photo using your device's camera.</p>
+
+    <section class="notice" aria-label="Photo and privacy information">
+      <strong>Before you continue</strong>
+      <p>If you agree, this page will request camera access and automatically take one photo after a 3-second countdown. The photo will be shown here so you can download it. It is not uploaded or sent to anyone by this page.</p>
+    </section>
+
+    <label class="check">
+      <input type="checkbox" id="consent">
+      <span>I understand and agree to the camera being activated and a selfie being taken after the countdown.</span>
+    </label>
+
+    <div class="actions">
+      <button id="start" class="primary" disabled>Agree &amp; start camera</button>
+      <button id="stop" class="secondary" disabled>Stop camera</button>
+    </div>
+
+    <p id="status" class="status" role="status" aria-live="polite">Check the consent box to continue.</p>
+
+    <section id="stage" class="stage" hidden>
+      <video id="video" autoplay playsinline muted hidden></video>
+      <p id="countdown" class="countdown" aria-live="polite"></p>
+      <canvas id="canvas" hidden></canvas>
+      <img id="preview" class="preview" alt="Your captured selfie" hidden>
+      <div id="photo-actions" class="actions" hidden>
+        <a id="download" class="download" download="school-project-selfie.jpg">Download selfie</a>
+        <button id="retake" class="secondary">Take another</button>
+      </div>
+      <p class="small">Tip: On phones, allow camera access when your browser asks. If prompted, choose the front-facing camera.</p>
+    </section>
+
+    <footer>
+      Privacy note: this webpage contains no upload feature, analytics, or third-party scripts. Downloaded photos are saved only when you choose to download them. You can stop the camera at any time.
+    </footer>
+    <noscript>This page needs JavaScript enabled to use the camera.</noscript>
+  </main>
+
+  <script>
+    (() => {
+      const consent = document.getElementById('consent');
+      const startBtn = document.getElementById('start');
+      const stopBtn = document.getElementById('stop');
+      const status = document.getElementById('status');
+      const stage = document.getElementById('stage');
+      const video = document.getElementById('video');
+      const canvas = document.getElementById('canvas');
+      const preview = document.getElementById('preview');
+      const countdown = document.getElementById('countdown');
+      const photoActions = document.getElementById('photo-actions');
+      const download = document.getElementById('download');
+      const retakeBtn = document.getElementById('retake');
+
+      let stream = null;
+      let timerIds = [];
+      let runId = 0;
+
+      function setStatus(message, isError = false) {
+        status.textContent = message;
+        status.classList.toggle('error', isError);
+      }
+
+      function clearTimers() {
+        timerIds.forEach(clearTimeout);
+        timerIds = [];
+      }
+
+      function stopCamera() {
+        runId++;
+        clearTimers();
+        if (stream) {
+          stream.getTracks().forEach(track => track.stop());
+          stream = null;
+        }
+        video.srcObject = null;
+        video.hidden = true;
+        stopBtn.disabled = true;
+        countdown.textContent = '';
+      }
+
+      function resetPhoto() {
+        preview.hidden = true;
+        preview.removeAttribute('src');
+        canvas.hidden = true;
+        photoActions.hidden = true;
+        countdown.textContent = '';
+      }
+
+      async function startCamera() {
+        if (!consent.checked) {
+          setStatus('Please agree before starting the camera.', true);
+          return;
+        }
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          setStatus('Camera access is unavailable. Open this page over HTTPS in a modern browser.', true);
+          return;
+        }
+
+        stopCamera();
+        resetPhoto();
+        stage.hidden = false;
+        startBtn.disabled = true;
+        consent.disabled = true;
+        stopBtn.disabled = false;
+        setStatus('Requesting camera permission…');
+
+        const thisRun = runId;
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'user' },
+            audio: false
+          });
+          if (thisRun !== runId) {
+            stream.getTracks().forEach(track => track.stop());
+            return;
+          }
+          video.srcObject = stream;
+          video.hidden = false;
+          await video.play();
+
+          // Wait until the video has usable dimensions before starting countdown.
+          if (!video.videoWidth || !video.videoHeight) {
+            await new Promise((resolve, reject) => {
+              const timeout = setTimeout(() => reject(new Error('The camera did not become ready in time.')), 8000);
+              video.addEventListener('loadedmetadata', () => { clearTimeout(timeout); resolve(); }, { once: true });
+            });
+          }
+          if (thisRun !== runId) return;
+          setStatus('Camera is on. Your selfie will be taken automatically.');
+          let seconds = 3;
+          countdown.textContent = `Taking selfie in ${seconds}…`;
+          const tick = () => {
+            if (thisRun !== runId) return;
+            seconds--;
+            if (seconds > 0) {
+              countdown.textContent = `Taking selfie in ${seconds}…`;
+              timerIds.push(setTimeout(tick, 1000));
+            } else {
+              capturePhoto(thisRun);
+            }
+          };
+          timerIds.push(setTimeout(tick, 1000));
+        } catch (error) {
+          stopCamera();
+          consent.disabled = false;
+          startBtn.disabled = !consent.checked;
+          if (error && (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError')) {
+            setStatus('Camera permission was denied. Allow camera access in your browser settings if you want to try again.', true);
+          } else {
+            setStatus((error && error.message) || 'Could not start the camera. Please try again.', true);
+          }
+        }
+      }
+
+      function capturePhoto(thisRun) {
+        if (thisRun !== runId || !stream || !video.videoWidth || !video.videoHeight) {
+          setStatus('The camera was stopped before the photo could be taken.', true);
+          return;
+        }
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const context = canvas.getContext('2d');
+        context.save();
+        context.translate(canvas.width, 0);
+        context.scale(-1, 1);
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        context.restore();
+
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+        preview.src = dataUrl;
+        preview.hidden = false;
+        canvas.hidden = true;
+        video.hidden = true;
+        photoActions.hidden = false;
+        download.href = dataUrl;
+        stopCamera();
+        consent.disabled = false;
+        startBtn.disabled = !consent.checked;
+        setStatus('Selfie captured. It has not been uploaded or sent anywhere.');
+      }
+
+      consent.addEventListener('change', () => {
+        startBtn.disabled = !consent.checked;
+        setStatus(consent.checked ? 'Thanks. Select “Agree & start camera” when you are ready.' : 'Check the consent box to continue.');
+      });
+
+      startBtn.addEventListener('click', startCamera);
+      stopBtn.addEventListener('click', () => {
+        stopCamera();
+        consent.disabled = false;
+        startBtn.disabled = !consent.checked;
+        setStatus('Camera stopped. No photo was sent anywhere.');
+      });
+      retakeBtn.addEventListener('click', startCamera);
+      window.addEventListener('pagehide', stopCamera);
+    })();
+  </script>
+</body>
+</html>
