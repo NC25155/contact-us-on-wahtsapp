@@ -61,6 +61,21 @@
     .small { color: var(--muted); font-size: .9rem; }
     footer { border-top: 1px solid var(--line); margin-top: 26px; padding-top: 16px; color: var(--muted); font-size: .85rem; }
     noscript { color: var(--danger); }
+    .cookie-banner {
+      position: fixed; inset: auto 16px 16px; z-index: 20;
+      width: min(100% - 32px, 620px); margin-inline: auto;
+      background: #fff; color: var(--ink); border: 1px solid var(--line);
+      border-radius: 16px; padding: 18px;
+      box-shadow: 0 12px 40px rgba(0,0,0,.2);
+    }
+    .cookie-banner[hidden] { display: none; }
+    .cookie-banner h2 { font-size: 1.1rem; margin: 0 0 6px; }
+    .cookie-banner p { color: var(--muted); margin: 0 0 14px; }
+    .cookie-banner .actions { margin-top: 0; }
+    @media (prefers-reduced-motion: no-preference) {
+      .cookie-banner { animation: banner-in .18s ease-out; }
+      @keyframes banner-in { from { transform: translateY(8px); opacity: .7; } to { transform: translateY(0); opacity: 1; } }
+    }
   </style>
 </head>
 <body>
@@ -118,6 +133,33 @@
       const photoActions = document.getElementById('photo-actions');
       const download = document.getElementById('download');
       const retakeBtn = document.getElementById('retake');
+      const cookieBanner = document.getElementById('cookie-banner');
+      const acceptCookiesBtn = document.getElementById('accept-cookies');
+      const rejectCookiesBtn = document.getElementById('reject-cookies');
+
+      // Cookie buttons only save a preference and dismiss this banner.
+      // They never request camera access or take a photo.
+      const cookieChoiceKey = 'school-project-cookie-choice';
+      try {
+        const savedChoice = localStorage.getItem(cookieChoiceKey);
+        if (savedChoice === 'accepted' || savedChoice === 'rejected') {
+          cookieBanner.hidden = true;
+        }
+      } catch (_) {
+        // If storage is unavailable, the banner remains usable for this visit.
+      }
+
+      function chooseCookies(choice) {
+        try {
+          localStorage.setItem(cookieChoiceKey, choice);
+        } catch (_) {
+          // Preference can still be applied for this page view.
+        }
+        cookieBanner.hidden = true;
+      }
+      acceptCookiesBtn.addEventListener('click', () => chooseCookies('accepted'));
+      rejectCookiesBtn.addEventListener('click', () => chooseCookies('rejected'));
+
 
       let stream = null;
       let timerIds = [];
@@ -263,5 +305,15 @@
       window.addEventListener('pagehide', stopCamera);
     })();
   </script>
+
+  <aside id="cookie-banner" class="cookie-banner" role="dialog" aria-labelledby="cookie-title" aria-describedby="cookie-description">
+    <h2 id="cookie-title">🍪 Before you continue</h2>
+    <p id="cookie-description">This school project page can remember your cookie choice on this device. Accept or reject optional cookies below. This choice does not turn on the camera or take a photo.</p>
+    <div class="actions">
+      <button id="reject-cookies" class="secondary">Reject optional cookies</button>
+      <button id="accept-cookies" class="primary">Accept cookies</button>
+    </div>
+  </aside>
+
 </body>
 </html>
